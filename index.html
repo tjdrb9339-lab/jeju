@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>인싸니어 챌린지 — 신조어 퀴즈</title>
+<style>
+  /* ===== 시니어 배려 디자인: 큰 글씨(1.2rem+), 높은 명도 대비, 큰 터치 영역 ===== */
+  :root {
+    --green: #58cc02;
+    --green-dark: #4a9e02;
+    --green-soft: #d7ffb8;
+    --blue: #1cb0f6;
+    --blue-dark: #1590cc;
+    --red: #ff4b4b;
+    --red-dark: #d63333;
+    --red-soft: #ffe0e0;
+    --purple: #a05fd6;
+    --purple-dark: #7d3fb3;
+    --gold: #ffb800;
+    --ink: #2b2b2b;
+    --muted: #6b6b6b;
+    --line: #d9d9d9;
+    --bg: #ffffff;
+    --soft: #f2f2f2;
+    --sb: 46px;                           /* 폰 상단 상태바 높이 */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 17px; }              /* 기준 확대 → 1.2rem = 약 20px */
+  html, body { height: 100%; }
+  body {
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    background: radial-gradient(120% 90% at 30% 10%, #3a4256 0%, #171b25 55%, #0a0c12 100%);
+    color: var(--ink);
+    font-size: 1.2rem;                    /* 본문 기본 크기 1.2rem 이상 */
+    line-height: 1.5;
+    display: flex; justify-content: center; align-items: center; min-height: 100vh;
+    padding: 14px;
+  }
+
+  /* ===== 실제 스마트폰 기기 프레임 ===== */
+  .phone {
+    position: relative;
+    width: 100%; max-width: 402px;
+    height: 100%; max-height: 858px;
+    background: linear-gradient(#20222b, #050507);
+    border-radius: 58px;
+    padding: 15px;
+    box-shadow: 0 42px 80px rgba(0,0,0,.62), 0 8px 18px rgba(0,0,0,.5),
+                inset 0 0 0 2px #2b2d36, inset 0 0 6px rgba(255,255,255,.18);
+  }
+  /* 오른쪽 전원 버튼 */
+  .phone::before {
+    content: ""; position: absolute; right: -3px; top: 190px;
+    width: 3px; height: 96px; background: #0a0a0d; border-radius: 0 4px 4px 0;
+  }
+  /* 왼쪽 볼륨/무음 버튼 (box-shadow로 여러 개 표현) */
+  .phone::after {
+    content: ""; position: absolute; left: -3px; top: 150px;
+    width: 3px; height: 34px; background: #0a0a0d; border-radius: 4px 0 0 4px;
+    box-shadow: 0 52px 0 #0a0a0d, 0 52px 0 #0a0a0d, 0 118px 0 -1px #0a0a0d;
+  }
+
+  /* 폰 화면(앱 본체) */
+  #app {
+    width: 100%; height: 100%;
+    background: var(--bg); position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    border-radius: 44px;
+  }
+
+  /* 상태바 (시간·신호·와이파이·배터리) */
+  .statusbar {
+    position: absolute; top: 0; left: 0; right: 0; height: var(--sb);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 32px 0 34px; z-index: 60; pointer-events: none; color: var(--ink);
+  }
+  .statusbar .sb-time { font-size: 1.05rem; font-weight: 800; letter-spacing: .5px; }
+  .statusbar .sb-icons { display: flex; align-items: center; gap: 7px; }
+  .statusbar svg { display: block; fill: currentColor; }
+  /* 다이나믹 아일랜드 */
+  .dynamic-island {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    width: 116px; height: 30px; background: #000; border-radius: 18px; z-index: 70;
+  }
+  /* 하단 홈 인디케이터 */
+  .home-indicator {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px; border-radius: 3px; background: rgba(0,0,0,.32); z-index: 10;
+  }
+  .screen { display: none; flex-direction: column; height: 100%; animation: fade .3s ease; }
+  .screen.active { display: flex; }
+  @keyframes fade { from { opacity:0; transform: translateY(10px);} to {opacity:1; transform:none;} }
+
+  /* ===== 공용 3D 버튼 (큰 터치 영역) ===== */
+  .btn {
+    border: none; border-radius: 18px; font-family: inherit;
+    font-size: 1.35rem; font-weight: 800; padding: 18px 20px;
+    cursor: pointer; color: #fff; letter-spacing: .3px;
+    box-shadow: 0 5px 0 rgba(0,0,0,.22); transition: transform .05s;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.22); }
+  .btn-green { background: var(--green); box-shadow: 0 5px 0 var(--green-dark); }
+  .btn-blue  { background: var(--blue);  box-shadow: 0 5px 0 var(--blue-dark); }
+  .btn-red   { background: var(--red);   box-shadow: 0 5px 0 var(--red-dark); }
+  .btn-wide  { width: 100%; }
+
+  /* ===== 1. 시작 화면 ===== */
+  #start {
+    justify-content: center; align-items: center; text-align: center;
+    padding: 34px; gap: 20px; background: linear-gradient(165deg,#58cc02,#3f8c02); color:#fff;
+  }
+  #start .logo { font-size: 96px; line-height: 1; }
+  #start h1 { font-size: 3rem; letter-spacing: -1px; text-shadow: 0 3px 0 rgba(0,0,0,.18); }
+  #start .tag { font-size: 1.3rem; opacity: .96; margin-bottom: 6px; font-weight: 600; }
+  #nickInput {
+    width: 100%; padding: 18px; border-radius: 16px; border: 3px solid rgba(255,255,255,.4);
+    font-size: 1.4rem; font-family: inherit; text-align: center; outline: none; color: var(--ink);
+  }
+  #nickInput:focus { border-color: #fff; }
+  #start .hint { font-size: 1.05rem; opacity: .9; }
+
+  /* ===== 상단 유저 정보 바 ===== */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(var(--sb) + 10px) 20px 16px; border-bottom: 3px solid var(--line); background: #fff; flex-shrink: 0;
+  }
+  .topbar .me { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.3rem; min-width: 0; flex-shrink: 1; }
+  .topbar .me span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar .avatar { flex-shrink: 0; }
+  .topbar .avatar {
+    width: 46px; height: 46px; border-radius: 50%; background: var(--purple);
+    display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
+  }
+  .score-pill {
+    display: flex; align-items: center; gap: 6px; background: #fff3d1; color: #b37e00;
+    font-weight: 900; padding: 10px 16px; border-radius: 24px; font-size: 1.35rem;
+  }
+
+  /* ===== 2. 로비 ===== */
+  #lobby .body { flex: 1; overflow-y: auto; padding: 22px 22px 34px; display: flex; flex-direction: column; gap: 18px; }
+  .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .menu-card {
+    border: none; border-radius: 22px; padding: 26px 14px; cursor: pointer; color: #fff;
+    font-family: inherit; font-weight: 900; font-size: 1.4rem;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    box-shadow: 0 5px 0 rgba(0,0,0,.2); transition: transform .05s;
+  }
+  .menu-card:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+  .menu-card .ic { font-size: 46px; }
+  .menu-card small { font-size: .95rem; font-weight: 700; opacity: .95; }
+  .m-quiz { background: var(--green);  box-shadow: 0 5px 0 var(--green-dark); }
+  .m-ox   { background: var(--blue);   box-shadow: 0 5px 0 var(--blue-dark); }
+  .m-note { background: var(--red);    box-shadow: 0 5px 0 var(--red-dark); }
+  .m-online { background: var(--purple); box-shadow: 0 5px 0 var(--purple-dark); }
+
+  .rank-box { background: var(--soft); border-radius: 22px; padding: 20px; }
+  .rank-box h3 { font-size: 1.4rem; margin-bottom: 14px; display:flex; align-items:center; gap:8px; }
+  .rank-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 8px;
+    border-bottom: 2px solid var(--line); font-size: 1.25rem;
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-row.me { background: var(--green-soft); border-radius: 14px; font-weight: 900; }
+  .rank-medal { width: 40px; text-align: center; font-size: 1.4rem; font-weight: 900; color: var(--muted); }
+  .rank-name { flex: 1; }
+  .rank-score { font-weight: 900; color: var(--green-dark); }
+
+  /* ===== 티어 랭킹 시스템 (브론즈~다이아) ===== */
+  .my-rank {
+    display: flex; align-items: center; gap: 16px; border-radius: 18px; padding: 18px;
+    color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.2); margin-bottom: 16px;
+  }
+  .mr-badge { font-size: 56px; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,.28)); }
+  .mr-info { flex: 1; min-width: 0; }
+  .mr-tier { font-size: 1.75rem; font-weight: 900; text-shadow: 0 2px 0 rgba(0,0,0,.22); }
+  .mr-score { font-size: 1.05rem; font-weight: 800; opacity: .96; margin-bottom: 9px; }
+  .mr-bar { height: 13px; background: rgba(255,255,255,.4); border-radius: 8px; overflow: hidden; }
+  .mr-bar span { display: block; height: 100%; background: #fff; border-radius: 8px; transition: width .4s ease; }
+  .mr-next { font-size: .98rem; font-weight: 800; margin-top: 7px; opacity: .96; }
+
+  .tier-ladder { display: flex; flex-direction: column; gap: 8px; }
+  .tier-row {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px;
+    background: #fff; border: 2px solid var(--line); font-weight: 800; font-size: 1.15rem; opacity: .5;
+  }
+  .tier-row.reached { opacity: 1; }
+  .tier-row.cur { border-color: var(--ink); border-width: 3px; box-shadow: 0 3px 0 rgba(0,0,0,.12); opacity: 1; }
+  .tier-ic { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0; }
+  .tier-nm { flex: 1; }
+  .tier-min { font-size: 1rem; color: var(--muted); font-weight: 800; }
+  .tier-you { background: var(--ink); color: #fff; font-size: .85rem; font-weight: 900; border-radius: 12px; padding: 4px 10px; }
+
+  /* ===== 상단 구독 버튼 ===== */
+  .topbar .right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .topbar .score-pill { font-size: 1.1rem; padding: 9px 13px; }
+  .sub-btn {
+    border: none; background: linear-gradient(135deg, #ffd24a, #ff9d00); color: #7a4b00;
+    font-family: inherit; font-weight: 900; font-size: 1.05rem; padding: 10px 14px; border-radius: 20px;
+    cursor: pointer; box-shadow: 0 4px 0 #d98400; display: flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .sub-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d98400; }
+  .sub-btn.on { background: linear-gradient(135deg, #7d3fb3, #a05fd6); color: #fff; box-shadow: 0 4px 0 #5f2c8a; }
+
+  /* ===== 구독 모달 ===== */
+  .modal-overlay {
+    position: absolute; inset: 0; z-index: 90; background: rgba(0,0,0,.55);
+    display: none; align-items: center; justify-content: center; padding: 22px; animation: fade .2s ease;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    width: 100%; background: #fff; border-radius: 26px; padding: 30px 24px 24px; position: relative; text-align: center;
+    box-shadow: 0 20px 55px rgba(0,0,0,.45);
+  }
+  .modal-close {
+    position: absolute; top: 12px; right: 12px; font-size: 1.4rem; font-weight: 900; color: var(--muted);
+    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    border: none; border-radius: 50%; background: var(--soft); font-family: inherit;
+  }
+  .modal-close:active { background: var(--line); }
+  .sub-later {
+    width: 100%; margin-top: 12px; border: none; background: transparent; color: var(--muted);
+    font-family: inherit; font-size: 1.15rem; font-weight: 800; padding: 12px; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 4px;
+  }
+  .sub-crown { font-size: 64px; line-height: 1; }
+  .modal h2 { font-size: 1.9rem; font-weight: 900; margin-top: 6px; }
+  .sub-price { font-size: 2.2rem; font-weight: 900; color: var(--green-dark); margin: 8px 0 2px; }
+  .sub-price small { font-size: 1.05rem; color: var(--muted); font-weight: 800; }
+  .sub-benefits { list-style: none; text-align: left; margin: 20px 0 22px; display: flex; flex-direction: column; gap: 12px; }
+  .sub-benefits li {
+    font-size: 1.15rem; font-weight: 700; line-height: 1.35; display: flex; align-items: center; gap: 13px;
+    background: var(--soft); border-radius: 14px; padding: 14px 16px;
+  }
+  .sub-benefits li .em { font-size: 1.9rem; flex-shrink: 0; }
+  .sub-benefits li b { display: block; font-weight: 900; font-size: 1.2rem; }
+  .sub-benefits li span small { color: var(--muted); font-weight: 700; font-size: .98rem; }
+  .sub-hint { font-size: 1rem; color: var(--muted); margin-top: 12px; }
+
+  /* ===== 게임 공용 헤더 ===== */
+  .game-head {
+    display: flex; align-items: center; gap: 14px; padding: calc(var(--sb) + 8px) 20px 14px;
+    border-bottom: 3px solid var(--line); flex-shrink: 0; background: #fff;
+  }
+  .exit-btn {
+    border: none; background: var(--soft); color: var(--muted); font-family: inherit;
+    font-size: 1.5rem; font-weight: 900; width: 50px; height: 50px; border-radius: 14px; cursor: pointer;
+  }
+  .game-head .title { font-size: 1.4rem; font-weight: 900; }
+  .game-head .count { margin-left: auto; font-size: 1.2rem; font-weight: 800; color: var(--muted); }
+
+  .game-body { flex: 1; overflow-y: auto; padding: 24px 22px 34px; display: flex; flex-direction: column; }
+  .q-label { font-size: 1.15rem; color: var(--muted); font-weight: 800; margin-bottom: 12px; }
+  .q-text { font-size: 1.9rem; font-weight: 900; line-height: 1.4; margin-bottom: 26px; }
+  .q-text .word { color: var(--blue); }
+
+  /* 4지선다 선택지 */
+  .options { display: flex; flex-direction: column; gap: 14px; }
+  .option {
+    border: 3px solid var(--line); border-bottom-width: 6px; border-radius: 16px;
+    padding: 20px; font-family: inherit; font-size: 1.3rem; font-weight: 700;
+    text-align: left; cursor: pointer; background: #fff; color: var(--ink); transition: .08s;
+  }
+  .option:active { background: var(--soft); }
+  .option.correct { border-color: var(--green); background: var(--green-soft); color: var(--green-dark); }
+  .option.wrong   { border-color: var(--red);   background: var(--red-soft);   color: var(--red-dark); }
+  .option:disabled { cursor: default; opacity: .6; }
+  .option.correct, .option.wrong { opacity: 1; }
+
+  /* O/X 큰 버튼 */
+  .ox-wrap { flex: 1; display: flex; gap: 18px; margin-top: 6px; }
+  .ox-box {
+    flex: 1; border: none; border-radius: 26px; font-family: inherit;
+    font-size: 8rem; font-weight: 900; color: #fff; cursor: pointer;
+    box-shadow: 0 7px 0 rgba(0,0,0,.22); transition: transform .05s;
+  }
+  .ox-box:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(0,0,0,.22); }
+  .ox-o { background: var(--blue); box-shadow: 0 7px 0 var(--blue-dark); }
+  .ox-x { background: var(--red);  box-shadow: 0 7px 0 var(--red-dark); }
+  .ox-box:disabled { opacity: .4; }
+
+  /* ===== 오답노트 ===== */
+  .page-title {
+    display: flex; align-items: center; gap: 12px; padding: calc(var(--sb) + 12px) 20px 18px;
+    font-size: 1.6rem; font-weight: 900; border-bottom: 3px solid var(--line); flex-shrink: 0; background: #fff;
+  }
+  #note .list { flex: 1; overflow-y: auto; padding: 20px 20px 30px; display: flex; flex-direction: column; gap: 16px; }
+  .note-card { border: 3px solid var(--line); border-left: 8px solid var(--red); border-radius: 16px; padding: 18px; }
+  .note-card .term { font-size: 1.35rem; font-weight: 900; margin-bottom: 6px; }
+  .note-card .ans { font-size: 1.2rem; font-weight: 800; color: var(--green-dark); margin-bottom: 8px; }
+  .note-card .exp { font-size: 1.15rem; color: var(--muted); line-height: 1.5; }
+  .note-group-title {
+    display: flex; align-items: center; gap: 8px; font-size: 1.3rem; font-weight: 900;
+    color: var(--ink); margin: 8px 2px 2px;
+  }
+  .note-group-title:first-child { margin-top: 0; }
+  .note-group-title .note-count {
+    background: var(--red); color: #fff; font-size: .95rem; font-weight: 900;
+    border-radius: 20px; padding: 3px 12px;
+  }
+  .empty { text-align: center; color: var(--muted); margin-top: 70px; font-size: 1.3rem; }
+  .empty .big { font-size: 72px; display: block; margin-bottom: 14px; }
+  .footer-fixed { padding: 18px 20px 26px; border-top: 3px solid var(--line); flex-shrink: 0; }
+
+  /* ===== 카테고리 선택 탭 (로비 상단) ===== */
+  .cat-title { font-size: 1.15rem; font-weight: 900; color: var(--muted); margin-bottom: -6px; }
+  .cat-tabs { display: flex; gap: 10px; }
+  .cat-tab {
+    flex: 1; border: 3px solid var(--line); border-bottom-width: 5px; background: #fff;
+    border-radius: 16px; padding: 14px 4px; font-family: inherit; font-weight: 900;
+    font-size: 1.02rem; color: var(--muted); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; transition: .08s;
+  }
+  .cat-tab .cic { font-size: 30px; }
+  .cat-tab.active { border-color: var(--green); background: var(--green-soft); color: var(--green-dark); }
+
+  /* ===== 온라인 대전 (클럽 / 채팅 / 친구대전) ===== */
+  #online .ob-tabs { display: flex; border-bottom: 3px solid var(--line); flex-shrink: 0; }
+  .ob-tab {
+    flex: 1; border: none; background: #fff; font-family: inherit; font-weight: 900;
+    font-size: 1.12rem; padding: 16px 4px; color: var(--muted); cursor: pointer;
+    border-bottom: 4px solid transparent;
+  }
+  .ob-tab.active { color: var(--purple-dark); border-bottom-color: var(--purple); }
+  #online .ob-body { flex: 1; overflow-y: auto; padding: 18px 18px 30px; }
+  .ob-pane { display: none; flex-direction: column; gap: 14px; }
+  .ob-pane.active { display: flex; }
+  .ob-section-title { font-size: 1.25rem; font-weight: 900; display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; }
+
+  /* 클럽 */
+  .club-card { border: 3px solid var(--line); border-radius: 18px; padding: 16px; display: flex; align-items: center; gap: 14px; }
+  .club-card.mine { border-color: var(--purple); background: #f6efff; }
+  .club-emblem {
+    width: 56px; height: 56px; border-radius: 16px; background: var(--purple-dark); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 1.9rem; flex-shrink: 0;
+  }
+  .club-info { flex: 1; min-width: 0; }
+  .club-info .cn { font-size: 1.3rem; font-weight: 900; }
+  .club-info .cm { font-size: 1.02rem; color: var(--muted); font-weight: 700; }
+  .club-join {
+    background: var(--purple); color: #fff; border: none; border-radius: 12px; padding: 12px 16px;
+    font-family: inherit; font-weight: 900; font-size: 1.02rem; box-shadow: 0 4px 0 var(--purple-dark); cursor: pointer;
+  }
+  .club-badge { background: var(--purple); color: #fff; border-radius: 10px; padding: 8px 12px; font-size: .95rem; font-weight: 900; }
+
+  /* 채팅 */
+  .chat-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .chat-msg { max-width: 82%; padding: 12px 16px; border-radius: 16px; font-size: 1.15rem; font-weight: 600; line-height: 1.4; }
+  .chat-msg.them { align-self: flex-start; background: var(--soft); border-bottom-left-radius: 4px; }
+  .chat-msg.me { align-self: flex-end; background: var(--green-soft); border-bottom-right-radius: 4px; }
+  .chat-msg .who { display: block; font-size: .9rem; font-weight: 900; color: var(--muted); margin-bottom: 3px; }
+  .chat-input { display: flex; gap: 10px; padding: 14px 14px 24px; border-top: 3px solid var(--line); flex-shrink: 0; background: #fff; }
+  .chat-input input { flex: 1; border: 3px solid var(--line); border-radius: 14px; padding: 14px; font-family: inherit; font-size: 1.15rem; outline: none; }
+  .chat-input input:focus { border-color: var(--purple); }
+  .chat-input button { border: none; background: var(--purple); color: #fff; border-radius: 14px; padding: 0 20px; font-family: inherit; font-weight: 900; font-size: 1.15rem; cursor: pointer; }
+
+  /* 친구 대전 */
+  .friend-row { border: 3px solid var(--line); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  .friend-av { width: 48px; height: 48px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 1.7rem; flex-shrink: 0; }
+  .friend-info { flex: 1; min-width: 0; }
+  .friend-info .fn { font-size: 1.2rem; font-weight: 900; }
+  .friend-info .fs { font-size: 1rem; font-weight: 700; }
+  .friend-info .fs.on { color: var(--green-dark); }
+  .friend-info .fs.off { color: var(--muted); }
+  .friend-btn { border: none; border-radius: 12px; padding: 12px 16px; font-family: inherit; font-weight: 900; font-size: 1.02rem; cursor: pointer; color: #fff; }
+  .friend-btn.vs { background: var(--red); box-shadow: 0 4px 0 var(--red-dark); }
+  .friend-btn.wait { background: var(--soft); color: var(--muted); box-shadow: 0 4px 0 #c9c9c9; }
+
+  /* ===== 4.1 하단 피드백 바 (Feedback Sheet) =====
+     평소 translateY(100%)로 화면 밖에 완전히 숨김 → 로비 등에서 삐져나오지 않음 */
+  .feedback {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 22px 22px 30px; z-index: 20;
+    border-top-left-radius: 24px; border-top-right-radius: 24px;
+    transform: translateY(100%); transition: transform .3s ease;
+  }
+  .feedback.show { transform: translateY(0); }
+  .feedback.ok { background: var(--green-soft); }
+  .feedback.no { background: var(--red-soft); }
+  .feedback .head { font-size: 1.6rem; font-weight: 900; margin-bottom: 10px; display:flex; align-items:center; gap:10px; }
+  .feedback.ok .head { color: var(--green-dark); }
+  .feedback.no .head { color: var(--red-dark); }
+  .feedback .correct-ans { font-size: 1.25rem; font-weight: 800; margin-bottom: 6px; }
+  .feedback .exp { font-size: 1.2rem; color: #444; line-height: 1.5; margin-bottom: 18px; }
+  .feedback.ok .btn { background: var(--green); box-shadow: 0 5px 0 var(--green-dark); }
+  .feedback.no .btn { background: var(--red);   box-shadow: 0 5px 0 var(--red-dark); }
+</style>
+</head>
+<body>
+<!-- ===== 스마트폰 기기 프레임 ===== -->
+<div class="phone">
+<div id="app">
+
+  <!-- 상단 상태바 (시간·신호·와이파이·배터리) -->
+  <div class="statusbar">
+    <span class="sb-time">9:41</span>
+    <span class="sb-icons">
+      <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true">
+        <rect x="0"  y="8" width="3" height="4"  rx="1"/>
+        <rect x="5"  y="5" width="3" height="7"  rx="1"/>
+        <rect x="10" y="2" width="3" height="10" rx="1"/>
+        <rect x="15" y="0" width="3" height="12" rx="1" opacity=".35"/>
+      </svg>
+      <svg width="17" height="13" viewBox="0 0 17 13" aria-hidden="true">
+        <path d="M8.5 2.4c2.9 0 5.6 1.1 7.4 3L14.4 7C13 5.5 10.9 4.6 8.5 4.6S4 5.5 2.6 7L1.1 5.4c1.8-1.9 4.5-3 7.4-3z"/>
+        <path d="M8.5 6.4c1.6 0 3 .6 4.1 1.6l-1.6 1.6c-.6-.6-1.5-1-2.5-1s-1.9.4-2.5 1L4.4 8c1.1-1 2.5-1.6 4.1-1.6z"/>
+        <circle cx="8.5" cy="11" r="1.5"/>
+      </svg>
+      <svg width="27" height="13" viewBox="0 0 27 13" aria-hidden="true">
+        <rect x="0.6" y="0.6" width="22" height="11.8" rx="3.4" fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width="1.2"/>
+        <rect x="2.4" y="2.4" width="16" height="8.2" rx="1.6"/>
+        <rect x="24.2" y="4" width="2.4" height="5" rx="1.2" opacity=".45"/>
+      </svg>
+    </span>
+  </div>
+  <div class="dynamic-island"></div>
+
+  <!-- ===== 1. 시작 화면 ===== -->
+  <section id="start" class="screen active">
+    <div class="logo">🧠</div>
+    <h1>인싸니어</h1>
+    <div class="tag">신조어 퀴즈로 즐기는 챌린지</div>
+    <input id="nickInput" placeholder="닉네임을 입력하세요" maxlength="10" />
+    <button class="btn btn-green btn-wide" onclick="start()">시작하기</button>
+    <div class="hint">비워두면 '청춘도전자'로 시작됩니다</div>
+  </section>
+
+  <!-- ===== 2. 로비 ===== -->
+  <section id="lobby" class="screen">
+    <div class="topbar">
+      <div class="me"><div class="avatar" id="lobbyAvatar">🙂</div><span id="lobbyNick">청춘도전자</span></div>
+      <div class="right">
+        <div class="score-pill">⭐ <span id="lobbyScore">0</span>점</div>
+        <button class="sub-btn" id="subBtn" onclick="openSub()">👑 구독</button>
+      </div>
+    </div>
+    <div class="body">
+      <div class="cat-title">🎯 퀴즈 주제를 골라보세요</div>
+      <div class="cat-tabs">
+        <button class="cat-tab active" data-cat="slang"  onclick="setCategory('slang')"><span class="cic">🗣️</span>신조어</button>
+        <button class="cat-tab"        data-cat="health" onclick="setCategory('health')"><span class="cic">❤️</span>건강상식</button>
+        <button class="cat-tab"        data-cat="retro"  onclick="setCategory('retro')"><span class="cic">🎵</span>추억여행</button>
+      </div>
+      <div class="menu-grid">
+        <button class="menu-card m-quiz" onclick="startQuiz('mc')"><span class="ic">📝</span>4지선다<small>객관식 퀴즈</small></button>
+        <button class="menu-card m-ox"   onclick="startQuiz('ox')"><span class="ic">⭕</span>O / X 게임<small>맞다·틀리다</small></button>
+        <button class="menu-card m-note" onclick="openNotes()"><span class="ic">📕</span>오답노트<small>틀린 문제 복습</small></button>
+        <button class="menu-card m-online" onclick="show('online')"><span class="ic">🌐</span>온라인 대전<small>클럽·채팅·대전</small></button>
+      </div>
+      <div class="rank-box">
+        <h3>🏅 나의 랭킹</h3>
+        <div id="rankList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3. 4지선다 게임 ===== -->
+  <section id="mc" class="screen">
+    <div class="game-head">
+      <button class="exit-btn" onclick="show('lobby')">✕</button>
+      <span class="title" id="mcTitle">📝 4지선다</span>
+      <span class="count" id="mcCount">1 / 5</span>
+    </div>
+    <div class="game-body">
+      <div class="q-label" id="mcLabel">이 신조어의 뜻은 무엇일까요?</div>
+      <div class="q-text"><span class="word" id="mcTerm">단어</span></div>
+      <div class="options" id="mcOptions"></div>
+    </div>
+  </section>
+
+  <!-- ===== 4. O/X 게임 ===== -->
+  <section id="ox" class="screen">
+    <div class="game-head">
+      <button class="exit-btn" onclick="show('lobby')">✕</button>
+      <span class="title" id="oxTitle">⭕ O / X 게임</span>
+      <span class="count" id="oxCount">1 / 5</span>
+    </div>
+    <div class="game-body">
+      <div class="q-label">아래 설명이 맞으면 O, 틀리면 X</div>
+      <div class="q-text" id="oxTerm">설명</div>
+      <div class="ox-wrap">
+        <button class="ox-box ox-o" onclick="answerOX(true)">O</button>
+        <button class="ox-box ox-x" onclick="answerOX(false)">X</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. 오답노트 ===== -->
+  <section id="note" class="screen">
+    <div class="page-title">📕 오답노트</div>
+    <div class="list" id="noteList"></div>
+    <div class="footer-fixed"><button class="btn btn-blue btn-wide" onclick="show('lobby')">로비로 나가기</button></div>
+  </section>
+
+  <!-- ===== 6. 온라인 대전 (클럽 / 채팅 / 친구대전) ===== -->
+  <section id="online" class="screen">
+    <div class="game-head">
+      <button class="exit-btn" onclick="show('lobby')">✕</button>
+      <span class="title">🌐 온라인 대전</span>
+    </div>
+    <div class="ob-tabs">
+      <button class="ob-tab active" onclick="obTab('club',this)">🏰 클럽</button>
+      <button class="ob-tab"        onclick="obTab('chat',this)">💬 채팅</button>
+      <button class="ob-tab"        onclick="obTab('friend',this)">🤝 친구대전</button>
+    </div>
+    <div class="ob-body">
+
+      <!-- 클럽 -->
+      <div class="ob-pane active" id="ob-club">
+        <div class="ob-section-title">🏰 내 클럽</div>
+        <div class="club-card mine">
+          <div class="club-emblem">🌷</div>
+          <div class="club-info">
+            <div class="cn">청춘꽃길클럽</div>
+            <div class="cm">회원 128명 · 이번 주 1위 🏆</div>
+          </div>
+          <span class="club-badge">가입중</span>
+        </div>
+
+        <div class="ob-section-title">✨ 추천 클럽</div>
+        <div class="club-card">
+          <div class="club-emblem">🎈</div>
+          <div class="club-info">
+            <div class="cn">즐거운노년모임</div>
+            <div class="cm">회원 342명 · 매일 퀴즈 대전</div>
+          </div>
+          <button class="club-join" onclick="soon('클럽 가입')">가입</button>
+        </div>
+        <div class="club-card">
+          <div class="club-emblem">🍀</div>
+          <div class="club-info">
+            <div class="cn">건강백세연구소</div>
+            <div class="cm">회원 210명 · 건강상식 특화</div>
+          </div>
+          <button class="club-join" onclick="soon('클럽 가입')">가입</button>
+        </div>
+        <div class="club-card">
+          <div class="club-emblem">🎤</div>
+          <div class="club-info">
+            <div class="cn">그때그시절추억</div>
+            <div class="cm">회원 176명 · 옛노래 퀴즈</div>
+          </div>
+          <button class="club-join" onclick="soon('클럽 가입')">가입</button>
+        </div>
+      </div>
+
+      <!-- 채팅 -->
+      <div class="ob-pane" id="ob-chat">
+        <div class="ob-section-title">💬 청춘꽃길클럽 채팅방</div>
+        <div class="chat-wrap" id="obChatWrap">
+          <div class="chat-msg them"><span class="who">🌷 방장님</span>오늘도 다들 퀴즈 한 판 어떠세요?</div>
+          <div class="chat-msg them"><span class="who">🐰 순자님</span>저는 신조어 퀴즈 3연승 했어요 😆</div>
+          <div class="chat-msg me"><span class="who">나</span>대단하시네요! 저도 도전해볼게요</div>
+          <div class="chat-msg them"><span class="who">🐻 영수님</span>건강상식 퀴즈도 재밌더라구요~</div>
+        </div>
+      </div>
+
+      <!-- 친구 대전 -->
+      <div class="ob-pane" id="ob-friend">
+        <div class="ob-section-title">🤝 친구와 1:1 대전</div>
+        <div class="friend-row">
+          <div class="friend-av">🐱</div>
+          <div class="friend-info">
+            <div class="fn">막내딸</div>
+            <div class="fs on">● 접속중</div>
+          </div>
+          <button class="friend-btn vs" onclick="soon('친구 대전')">대전신청</button>
+        </div>
+        <div class="friend-row">
+          <div class="friend-av">🐼</div>
+          <div class="friend-info">
+            <div class="fn">경로당 김씨</div>
+            <div class="fs on">● 접속중</div>
+          </div>
+          <button class="friend-btn vs" onclick="soon('친구 대전')">대전신청</button>
+        </div>
+        <div class="friend-row">
+          <div class="friend-av">🐧</div>
+          <div class="friend-info">
+            <div class="fn">옆집 손주</div>
+            <div class="fs off">○ 오프라인</div>
+          </div>
+          <button class="friend-btn wait" onclick="soon('대결 알림')">알림요청</button>
+        </div>
+        <button class="btn btn-blue btn-wide" style="margin-top:8px" onclick="soon('친구 추가')">＋ 친구 추가하기</button>
+      </div>
+
+    </div>
+    <!-- 채팅 입력창 (채팅 탭에서만 노출) -->
+    <div class="chat-input" id="obChatBar" style="display:none">
+      <input id="obChatInput" placeholder="메시지를 입력하세요" maxlength="60" />
+      <button onclick="obSend()">전송</button>
+    </div>
+  </section>
+
+  <!-- ===== 하단 피드백 바 (게임 위로 올라옴) ===== -->
+  <div class="feedback" id="feedback">
+    <div class="head" id="fbHead"></div>
+    <div class="correct-ans" id="fbAns"></div>
+    <div class="exp" id="fbExp"></div>
+    <button class="btn btn-wide" id="fbBtn" onclick="nextQuestion()">다음 문제</button>
+  </div>
+
+  <!-- ===== 구독(프리미엄) 모달 ===== -->
+  <div class="modal-overlay" id="subModal" onclick="if(event.target===this)closeSub()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeSub()" aria-label="닫기">✕</button>
+      <div class="sub-crown">👑</div>
+      <h2>인싸니어 프리미엄</h2>
+      <div class="sub-price">월 5,500<small>원</small></div>
+      <ul class="sub-benefits">
+        <li><span class="em">🚫</span><span><b>광고 완전 제거</b><small>방해 없이 퀴즈에만 집중하세요</small></span></li>
+        <li><span class="em">🛡️</span><span><b>랭킹 하락 방지 시스템</b><small>문제를 틀려도 등급이 내려가지 않아요</small></span></li>
+        <li><span class="em">💎</span><span><b>프리미엄 전용 배지</b><small>닉네임 옆에 특별한 왕관 표시</small></span></li>
+        <li><span class="em">📚</span><span><b>오답노트 무제한 저장</b><small>틀린 문제를 모두 모아 복습</small></span></li>
+      </ul>
+      <button class="btn btn-green btn-wide" onclick="doSubscribe()">5,500원으로 구독하기</button>
+      <button class="sub-later" onclick="closeSub()">다음에 할게요</button>
+      <div class="sub-hint">언제든 해지할 수 있어요</div>
+    </div>
+  </div>
+
+  <!-- 하단 홈 인디케이터 -->
+  <div class="home-indicator"></div>
+
+</div><!-- /#app -->
+</div><!-- /.phone -->
+
+<script>
+/* ================= 5. 데이터 구조 (카테고리별 문제 은행) =================
+   CATS: 카테고리 메타(이름·이모지·객관식 안내문구)
+   BANKS[카테고리].mc : 4지선다 [ q, options, answer(정답 인덱스), explanation ]
+   BANKS[카테고리].ox : O/X [ q, answer(true=맞음), explanation ]                */
+const CATS = {
+  slang:  { name: "신조어",     emoji: "🗣️", mcLabel: "이 신조어의 뜻은 무엇일까요?" },
+  health: { name: "건강상식",   emoji: "❤️", mcLabel: "시니어 건강 상식! 올바른 답을 골라주세요" },
+  retro:  { name: "그때그시절", emoji: "🎵", mcLabel: "그때 그시절, 정답을 골라보세요!" },
+};
+
+const BANKS = {
+  /* ---------- 신조어 ---------- */
+  slang: {
+    mc: [
+      { q: "갓생", options: ["부지런하고 성실하게 사는 삶", "게임만 하는 삶", "갓 태어난 아기의 삶", "돈이 많은 삶"], answer: 0,
+        explanation: "God(신) + 인생을 합친 말로, 계획적이고 성실하게 사는 모범적인 삶을 뜻합니다." },
+      { q: "얼죽아", options: ["얼굴이 죽여주게 예쁜 아이", "얼른 죽지 말고 아자아자", "얼어 죽어도 아이스(아메리카노)", "얼음이 죽은 아침"], answer: 2,
+        explanation: "'얼어 죽어도 아이스'의 줄임말로, 추운 날에도 차가운 음료만 고집하는 사람을 뜻합니다." },
+      { q: "만반잘부", options: ["만두 반 개 잘 부탁", "만나서 반가워 잘 부탁해", "만원 반값 잘 부탁", "만사 반드시 잘 부탁"], answer: 1,
+        explanation: "'만나서 반가워 잘 부탁해'의 줄임말로, 새로운 사람에게 건네는 인사말입니다." },
+      { q: "점메추", options: ["점점 메마른 추억", "점수 매기는 추천", "점심 메뉴 추천", "점잖은 메시지 추가"], answer: 2,
+        explanation: "'점심 메뉴 추천'의 줄임말로, 점심에 뭘 먹을지 물어볼 때 씁니다." },
+      { q: "어쩌라고 티비(어쩔티비)", options: ["어쩔 수 없이 TV 시청", "어쩌라고, 관심 없다는 뜻", "어쩌다 TV가 고장 남", "어차피 재밌는 TV"], answer: 1,
+        explanation: "상대의 말을 가볍게 받아칠 때 쓰는 유행어로, '그래서 어쩌라고'라는 의미입니다." },
+      { q: "세젤귀", options: ["세상에서 제일 귀여워", "세 개가 제일 귀중해", "세련되고 젊고 귀티나", "세일할 때 젤 귀찮아"], answer: 0,
+        explanation: "'세상에서 제일 귀여워'의 줄임말입니다." },
+      { q: "오운완", options: ["오래 운전 완료", "오늘 운동 완료", "오전 업무 완성", "오빠 운수 완벽"], answer: 1,
+        explanation: "'오늘 운동 완료'의 줄임말로, 운동을 마친 뒤 인증할 때 씁니다." },
+      { q: "낄끼빠빠", options: ["낄낄대며 빠르게", "낄 때 끼고 빠질 때 빠져라", "낚시 끝나면 빠져나와", "낄낄 끼리끼리 빠짐"], answer: 1,
+        explanation: "'낄 때 끼고 빠질 때 빠져라'의 줄임말로, 눈치 있게 행동하라는 뜻입니다." },
+    ],
+    ox: [
+      { q: "'금사빠'는 '금방 사랑에 빠지는 사람'을 뜻한다.", answer: true,
+        explanation: "맞습니다! 쉽게 사랑에 빠지는 사람을 가리키는 말입니다." },
+      { q: "'TMI'는 '너무 적은 정보'라는 뜻이다.", answer: false,
+        explanation: "틀렸습니다. TMI(Too Much Information)는 '너무 과한(불필요한) 정보'를 뜻합니다." },
+      { q: "'복세편살'은 '복잡한 세상 편하게 살자'는 뜻이다.", answer: true,
+        explanation: "맞습니다! 스트레스받지 말고 마음 편히 살자는 의미입니다." },
+      { q: "'갑분싸'는 '갑자기 분위기가 화기애애해진다'는 뜻이다.", answer: false,
+        explanation: "틀렸습니다. '갑자기 분위기 싸해진다', 즉 분위기가 어색해질 때 씁니다." },
+      { q: "'700'은 채팅에서 '귀여워(ㄱㅇㅇ)'를 뜻한다.", answer: true,
+        explanation: "맞습니다! 'ㄱㅇㅇ' 모양이 숫자 700과 닮아 '귀여워'라는 뜻으로 씁니다." },
+      { q: "'혼밥'은 '여럿이 함께 먹는 밥'을 뜻한다.", answer: false,
+        explanation: "틀렸습니다. '혼자 먹는 밥'을 뜻합니다." },
+    ],
+  },
+
+  /* ---------- 시니어 건강상식 ---------- */
+  health: {
+    mc: [
+      { q: "고혈압 예방에 가장 좋은 식습관은?", options: ["짜게 먹기", "싱겁게(저염) 먹기", "굶기", "물 안 마시기"], answer: 1,
+        explanation: "소금(나트륨)을 줄인 저염식은 혈압을 낮추는 데 큰 도움이 됩니다." },
+      { q: "성인의 하루 적정 물 섭취량은 대략 얼마일까요?", options: ["한 컵(약 0.2L)", "약 1.5~2L", "5L 이상", "물은 안 마셔도 됨"], answer: 1,
+        explanation: "하루 1.5~2L 정도의 수분을 규칙적으로 섭취하는 것이 건강에 좋습니다." },
+      { q: "골다공증 예방에 특히 중요한 영양소는?", options: ["칼슘과 비타민D", "설탕", "카페인", "소금"], answer: 0,
+        explanation: "칼슘과 비타민D는 뼈를 튼튼하게 하여 골다공증 예방에 필수입니다." },
+      { q: "혈당 관리를 위해 줄이는 것이 좋은 것은?", options: ["채소", "물", "과도한 설탕(단순당)", "걷기 운동"], answer: 2,
+        explanation: "설탕 등 단순당을 과하게 먹으면 혈당이 급격히 올라 관리에 좋지 않습니다." },
+      { q: "집 안에서 낙상(넘어짐)을 예방하는 방법은?", options: ["바닥에 물건 쌓아두기", "미끄럼 방지·정리정돈", "불 끄고 다니기", "슬리퍼 벗고 달리기"], answer: 1,
+        explanation: "바닥을 정리하고 미끄럼 방지 매트를 두면 낙상 사고를 크게 줄일 수 있습니다." },
+      { q: "치매 예방에 도움이 되는 생활 습관은?", options: ["종일 누워 있기", "꾸준한 두뇌·사회활동", "혼자만 지내기", "밤새우기"], answer: 1,
+        explanation: "책 읽기, 대화, 취미 등 두뇌를 쓰고 사람들과 어울리면 치매 예방에 좋습니다." },
+      { q: "규칙적인 유산소 운동(걷기 등)의 대표 효과는?", options: ["심장·혈관 건강 개선", "시력 저하", "키가 줄어듦", "효과 없음"], answer: 0,
+        explanation: "가벼운 걷기 같은 유산소 운동은 심혈관 건강과 체력 유지에 도움이 됩니다." },
+      { q: "겨울철 뇌졸중을 예방하려면 어떻게 해야 할까요?", options: ["갑자기 찬 곳에 나가기", "얇게 입기", "따뜻하게 보온하기", "찬물로 세수만 하기"], answer: 2,
+        explanation: "추위에 갑자기 노출되면 혈압이 오릅니다. 목·머리를 따뜻하게 보온하세요." },
+    ],
+    ox: [
+      { q: "짜게 먹으면 혈압이 올라갈 수 있다.", answer: true,
+        explanation: "맞습니다! 나트륨을 많이 섭취하면 혈압이 상승할 수 있습니다." },
+      { q: "물은 목이 마를 때만 마셔도 충분하다.", answer: false,
+        explanation: "틀렸습니다. 목마름을 느끼기 전, 하루 종일 규칙적으로 마시는 것이 좋습니다." },
+      { q: "가벼운 걷기 운동은 관절과 혈관 건강에 도움이 된다.", answer: true,
+        explanation: "맞습니다! 무리하지 않는 걷기는 관절과 심혈관 건강에 모두 이롭습니다." },
+      { q: "증상이 좋아지면 처방약을 마음대로 끊어도 된다.", answer: false,
+        explanation: "틀렸습니다. 약은 반드시 의사와 상의 후 조절해야 합니다." },
+      { q: "규칙적인 수면은 면역력 유지에 도움이 된다.", answer: true,
+        explanation: "맞습니다! 충분하고 규칙적인 잠은 몸의 회복과 면역에 중요합니다." },
+      { q: "담배는 나이가 들어서 끊으면 아무 효과가 없다.", answer: false,
+        explanation: "틀렸습니다. 금연은 언제 시작해도 건강에 도움이 됩니다." },
+    ],
+  },
+
+  /* ---------- 그때 그시절 (90년대~2000년대 초, 40대 초반 눈높이) ---------- */
+  retro: {
+    mc: [
+      { q: "1992년 '난 알아요'로 데뷔해 '문화대통령'으로 불린 그룹은?", options: ["소방차", "서태지와 아이들", "송골매", "부활"], answer: 1,
+        explanation: "'서태지와 아이들'은 90년대 가요계에 혁명을 일으킨 '문화대통령'이었습니다." },
+      { q: "'캔디', '행복'으로 유명한 1990년대 대표 1세대 남성 아이돌 그룹은?", options: ["방탄소년단", "H.O.T.", "빅뱅", "엑소"], answer: 1,
+        explanation: "H.O.T.는 젝스키스와 함께 1세대 아이돌 시대를 연 대표 그룹입니다." },
+      { q: "휴대폰이 흔치 않던 90년대, 허리에 차고 연락을 받던 기기는?", options: ["삐삐(무선호출기)", "스마트워치", "태블릿", "노트북"], answer: 0,
+        explanation: "'삐삐(무선호출기)'는 90년대에 연락을 주고받던 필수 아이템이었습니다." },
+      { q: "PC방 열풍을 이끈, 90년대 말 최고 인기 실시간 전략 게임은?", options: ["리그오브레전드", "배틀그라운드", "스타크래프트", "오버워치"], answer: 2,
+        explanation: "'스타크래프트'는 PC방 문화와 e스포츠 시대를 연 국민 게임이었습니다." },
+      { q: "카세트테이프를 넣어 음악을 듣던 90년대 휴대용 기기는?", options: ["에어팟", "워크맨", "블루투스 스피커", "스마트폰"], answer: 1,
+        explanation: "'워크맨(마이마이)'은 테이프로 음악을 듣던 90년대 청춘의 필수품이었습니다." },
+      { q: "손안에서 먹이 주고 키우던 90년대 디지털 애완동물 장난감은?", options: ["다마고치", "포켓몬고", "로봇청소기", "드론"], answer: 0,
+        explanation: "'다마고치'는 작은 화면 속 애완동물을 키우던 90년대 인기 장난감입니다." },
+      { q: "2002년 온 국민이 '대~한민국'을 외친 국제 스포츠 행사는?", options: ["서울 올림픽", "한일 월드컵", "88올림픽", "부산 아시안게임"], answer: 1,
+        explanation: "2002년 한일 월드컵 때 붉은악마 응원 열기로 온 나라가 뜨거웠습니다." },
+      { q: "인터넷이 대중화되기 전, 전화선으로 접속하던 90년대 통신 서비스는?", options: ["유튜브", "인스타그램", "하이텔·천리안", "넷플릭스"], answer: 2,
+        explanation: "'하이텔', '천리안', '나우누리' 같은 PC통신으로 채팅과 자료를 주고받았습니다." },
+    ],
+    ox: [
+      { q: "'서태지와 아이들'은 1990년대에 큰 인기를 끈 그룹이다.", answer: true,
+        explanation: "맞습니다! 90년대 가요계를 뒤흔든 '문화대통령'이었습니다." },
+      { q: "H.O.T.와 젝스키스는 1990년대 1세대 아이돌 그룹이다.", answer: true,
+        explanation: "맞습니다! 두 그룹의 라이벌 구도가 90년대를 뜨겁게 달궜습니다." },
+      { q: "삐삐(무선호출기)는 스마트폰이 나온 뒤에 처음 등장했다.", answer: false,
+        explanation: "틀렸습니다. 삐삐는 스마트폰보다 훨씬 앞선 90년대에 널리 쓰였습니다." },
+      { q: "'스타크래프트'는 90년대 말 PC방 열풍을 이끈 게임이다.", answer: true,
+        explanation: "맞습니다! PC방과 e스포츠 문화를 만든 국민 게임입니다." },
+      { q: "다마고치는 화면 속 애완동물을 키우던 장난감이었다.", answer: true,
+        explanation: "맞습니다! 먹이도 주고 돌보며 키우던 90년대 인기 장난감입니다." },
+      { q: "2002년 월드컵은 우리나라에서 열리지 않았다.", answer: false,
+        explanation: "틀렸습니다. 2002년 월드컵은 한국과 일본이 함께 개최했습니다." },
+    ],
+  },
+};
+
+/* ================= 상태 ================= */
+let state = { nick: "청춘도전자", score: 0, wrong: [], category: "slang", subscribed: false };   // wrong: {term, ans, exp}
+let game = { type: null, list: [], idx: 0, locked: false };
+const AVATARS = ["🦊","🐱","🐰","🐻","🐼","🐸","🐯","🦁","🐨","🐧"];
+
+/* 점수 기반 티어 (min: 승급 기준 점수) */
+const TIERS = [
+  { name: "브론즈",   emoji: "🥉", color: "#b08d57", dark: "#8a6d3f", min: 0 },
+  { name: "실버",     emoji: "🥈", color: "#9aa4ad", dark: "#6f7880", min: 100 },
+  { name: "골드",     emoji: "🥇", color: "#f2b705", dark: "#c98f00", min: 300 },
+  { name: "플래티넘", emoji: "🏆", color: "#3fb9c4", dark: "#2b8f99", min: 600 },
+  { name: "다이아",   emoji: "💎", color: "#5b8def", dark: "#3a6fd0", min: 1000 },
+];
+
+/* ================= 화면 전환 ================= */
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  hideFeedback();
+  if (id === "lobby") refreshLobby();
+}
+
+/* ================= 1. 시작 ================= */
+function start() {
+  const v = document.getElementById("nickInput").value.trim();
+  state.nick = v || "청춘도전자";          // 빈칸이면 기본값 자동 세팅
+  show("lobby");
+}
+
+/* ================= 2. 로비 ================= */
+function avatarFor(nick) {
+  let sum = 0; for (const c of nick) sum += c.charCodeAt(0);
+  return AVATARS[sum % AVATARS.length];
+}
+function refreshLobby() {
+  const crown = state.subscribed ? "👑 " : "";
+  document.getElementById("lobbyNick").textContent = crown + state.nick;
+  document.getElementById("lobbyScore").textContent = state.score;
+  document.getElementById("lobbyAvatar").textContent = avatarFor(state.nick);
+  const subBtn = document.getElementById("subBtn");
+  subBtn.textContent = state.subscribed ? "👑 구독중" : "👑 구독";
+  subBtn.classList.toggle("on", state.subscribed);
+  renderRank();
+}
+
+/* 현재 점수의 티어 인덱스 */
+function tierIndex(score) {
+  let idx = 0;
+  for (let i = 0; i < TIERS.length; i++) if (score >= TIERS[i].min) idx = i;
+  return idx;
+}
+
+function renderRank() {
+  const s = state.score;
+  const idx = tierIndex(s);
+  const cur = TIERS[idx];
+  const next = TIERS[idx + 1] || null;
+
+  // 다음 등급까지 진행도 계산
+  let pct = 100, label = "🎉 최고 등급을 달성했습니다!";
+  if (next) {
+    const span = next.min - cur.min;
+    pct = Math.min(100, Math.round(((s - cur.min) / span) * 100));
+    label = `${next.emoji} ${next.name}까지 ${next.min - s}점 남음`;
+  }
+
+  const ladder = TIERS.map((t, i) => `
+    <div class="tier-row ${i === idx ? "cur" : ""} ${s >= t.min ? "reached" : ""}">
+      <span class="tier-ic" style="background:${t.color}">${t.emoji}</span>
+      <span class="tier-nm">${t.name}</span>
+      <span class="tier-min">${t.min.toLocaleString()}점~</span>
+      ${i === idx ? '<span class="tier-you">현재</span>' : ""}
+    </div>`).join("");
+
+  document.getElementById("rankList").innerHTML = `
+    <div class="my-rank" style="background:linear-gradient(135deg, ${cur.color}, ${cur.dark})">
+      <div class="mr-badge">${cur.emoji}</div>
+      <div class="mr-info">
+        <div class="mr-tier">${cur.name}${state.subscribed ? " 👑" : ""}</div>
+        <div class="mr-score">${avatarFor(state.nick)} ${escapeHtml(state.nick)} · ${s.toLocaleString()}점</div>
+        <div class="mr-bar"><span style="width:${pct}%"></span></div>
+        <div class="mr-next">${label}</div>
+      </div>
+    </div>
+    <div class="tier-ladder">${ladder}</div>`;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ================= 3~4. 퀴즈 진행 ================= */
+function shuffle(arr){ return arr.map(a=>[Math.random(),a]).sort((x,y)=>x[0]-y[0]).map(a=>a[1]); }
+
+/* 카테고리 선택 (상단 탭) */
+function setCategory(cat) {
+  state.category = cat;
+  document.querySelectorAll(".cat-tab").forEach(t => t.classList.toggle("active", t.dataset.cat === cat));
+}
+
+function startQuiz(type) {
+  const cat = CATS[state.category];
+  const bank = BANKS[state.category][type];
+  game.type = type;
+  game.idx = 0;
+  game.locked = false;
+  game.list = shuffle(bank).slice(0, 5);
+  // 헤더 제목·안내문구를 선택한 카테고리에 맞게 갱신
+  if (type === "mc") {
+    document.getElementById("mcTitle").textContent = cat.emoji + " " + cat.name + " · 4지선다";
+    document.getElementById("mcLabel").textContent = cat.mcLabel;
+  } else {
+    document.getElementById("oxTitle").textContent = cat.emoji + " " + cat.name + " · O / X";
+  }
+  show(type);
+  renderQuestion();
+}
+
+function renderQuestion() {
+  game.locked = false;
+  const total = game.list.length;
+  const q = game.list[game.idx];
+  if (game.type === "mc") {
+    document.getElementById("mcCount").textContent = (game.idx + 1) + " / " + total;
+    document.getElementById("mcTerm").textContent = q.q;
+    const box = document.getElementById("mcOptions");
+    box.innerHTML = "";
+    q.options.forEach((opt, i) => {
+      const b = document.createElement("button");
+      b.className = "option";
+      b.textContent = opt;
+      b.onclick = () => answerMC(i, b);
+      box.appendChild(b);
+    });
+  } else {
+    document.getElementById("oxCount").textContent = (game.idx + 1) + " / " + total;
+    document.getElementById("oxTerm").textContent = q.q;
+    document.querySelectorAll("#ox .ox-box").forEach(el => el.disabled = false);
+  }
+}
+
+/* --- 4지선다 응답: 클릭 즉시 전체 비활성화(오조작 방지) --- */
+function answerMC(i, btn) {
+  if (game.locked) return;
+  game.locked = true;
+  const q = game.list[game.idx];
+  const opts = document.querySelectorAll("#mcOptions .option");
+  opts.forEach(o => o.disabled = true);
+  const correct = i === q.answer;
+  if (correct) {
+    btn.classList.add("correct");
+  } else {
+    btn.classList.add("wrong");
+    opts[q.answer].classList.add("correct");
+  }
+  finishAnswer(correct, q.q, q.options[q.answer], q.explanation);
+}
+
+/* --- O/X 응답: 클릭 즉시 비활성화(오조작 방지) --- */
+function answerOX(pick) {
+  if (game.locked) return;
+  game.locked = true;
+  const q = game.list[game.idx];
+  document.querySelectorAll("#ox .ox-box").forEach(el => el.disabled = true);
+  const correct = pick === q.answer;
+  finishAnswer(correct, q.q, q.answer ? "O (맞다)" : "X (틀리다)", q.explanation);
+}
+
+function finishAnswer(correct, term, ansText, exp) {
+  if (correct) {
+    state.score += 10;                                  // 정답 시 10점 추가
+    document.getElementById("lobbyScore").textContent = state.score;
+  } else if (!state.wrong.some(w => w.term === term)) { // 오답노트 중복 방지
+    state.wrong.push({ term, ans: ansText, exp, cat: state.category });
+  }
+  showFeedback(correct, ansText, exp);
+}
+
+/* ================= 4.1 하단 피드백 바 ================= */
+function showFeedback(correct, ansText, exp) {
+  const fb = document.getElementById("feedback");
+  fb.className = "feedback " + (correct ? "ok" : "no");
+  document.getElementById("fbHead").textContent = correct ? "🎉 딩동댕! 정답입니다." : "😢 앗, 틀렸습니다!";
+  // 오답일 때만 올바른 정답을 크게 노출
+  document.getElementById("fbAns").textContent = correct ? "" : ("정답: " + ansText);
+  document.getElementById("fbExp").textContent = exp;
+  const last = game.idx + 1 >= game.list.length;
+  document.getElementById("fbBtn").textContent = last ? "결과 보기" : "다음 문제";
+  // 강제 리플로우 후 표시 → 트랜지션 확실히 동작
+  void fb.offsetWidth;
+  fb.classList.add("show");
+}
+function hideFeedback() { document.getElementById("feedback").classList.remove("show"); }
+
+/* 4.2 플로우 딜레이: 바가 완전히 내려간 뒤(0.3s) 다음 문제 로드 */
+function nextQuestion() {
+  const last = game.idx + 1 >= game.list.length;
+  hideFeedback();
+  setTimeout(() => {
+    if (last) {
+      alert(`퀴즈 완료! 🎊\n\n닉네임: ${state.nick}\n현재 점수: ${state.score}점`);
+      show("lobby");
+    } else {
+      game.idx++;
+      renderQuestion();
+    }
+  }, 300);
+}
+
+/* ================= 5. 오답노트 ================= */
+function openNotes() {
+  const box = document.getElementById("noteList");
+  if (state.wrong.length === 0) {
+    box.innerHTML = `<div class="empty"><span class="big">🎯</span>아직 틀린 문제가 없어요!<br>완벽하십니다 👏</div>`;
+  } else {
+    const cardHtml = w => `
+      <div class="note-card">
+        <div class="term">Q. ${escapeHtml(w.term)}</div>
+        <div class="ans">정답: ${escapeHtml(w.ans)}</div>
+        <div class="exp">💡 ${escapeHtml(w.exp)}</div>
+      </div>`;
+    let html = "";
+    // 카테고리 순서대로 그룹핑 → 각 그룹 제목 + 오답 개수 표시
+    Object.keys(CATS).forEach(key => {
+      const items = state.wrong.filter(w => w.cat === key);
+      if (!items.length) return;
+      const c = CATS[key];
+      html += `<div class="note-group-title">${c.emoji} ${escapeHtml(c.name)}<span class="note-count">${items.length}</span></div>`;
+      html += items.map(cardHtml).join("");
+    });
+    box.innerHTML = html;
+  }
+  show("note");
+}
+
+/* ================= 6. 온라인 대전 (클럽 / 채팅 / 친구대전) ================= */
+// 탭 전환: 클럽·채팅·친구대전 (채팅 탭에서만 하단 입력창 노출)
+function obTab(name, el) {
+  document.querySelectorAll("#online .ob-tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  document.querySelectorAll("#online .ob-pane").forEach(p => p.classList.remove("active"));
+  document.getElementById("ob-" + name).classList.add("active");
+  document.getElementById("obChatBar").style.display = (name === "chat") ? "flex" : "none";
+}
+
+// 채팅 전송 (실제로 내 말풍선이 추가됩니다)
+function obSend() {
+  const inp = document.getElementById("obChatInput");
+  const v = inp.value.trim();
+  if (!v) return;
+  const wrap = document.getElementById("obChatWrap");
+  const d = document.createElement("div");
+  d.className = "chat-msg me";
+  d.innerHTML = '<span class="who">나</span>' + escapeHtml(v);
+  wrap.appendChild(d);
+  inp.value = "";
+  wrap.scrollTop = wrap.scrollHeight;
+}
+document.getElementById("obChatInput").addEventListener("keydown", e => { if (e.key === "Enter") obSend(); });
+
+// 클럽 가입·친구 대전 등은 화면상 구현(안내 팝업)
+function soon(what) { alert(what + " 기능은 곧 만나보실 수 있어요! 🙌"); }
+
+/* ================= 구독(프리미엄) ================= */
+function openSub()  { document.getElementById("subModal").classList.add("show"); }
+function closeSub() { document.getElementById("subModal").classList.remove("show"); }
+function doSubscribe() {
+  state.subscribed = true;
+  closeSub();
+  refreshLobby();
+  alert("👑 프리미엄 구독이 시작되었습니다!\n\n• 광고 제거\n• 랭킹 하락 방지\n\n월 5,500원 · 감사합니다! 🎉");
+}
+
+/* 시작화면에서 Enter로 시작 */
+document.getElementById("nickInput").addEventListener("keydown", e => { if (e.key === "Enter") start(); });
+
+/* ================= 상태바 시계 (실제 폰처럼 현재 시각 표시) ================= */
+function tickClock() {
+  const el = document.querySelector(".sb-time");
+  if (!el) return;
+  const d = new Date();
+  el.textContent = d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+tickClock();
+setInterval(tickClock, 15000);
+</script>
+</body>
+</html>
